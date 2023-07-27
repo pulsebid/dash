@@ -8,7 +8,7 @@ export const state = {
   sidebarView: 'default',
   sidebarColor: 'dark',
   sidebarImage: 'none',
-  preloader: 'disable',
+  preloader: 'enabled',
   visibility: 'show'
 };
 

@@ -1,4 +1,4 @@
-# velzon
+# Ad Pulse - Frontend em Vue JS
 
 ## Project setup
 ```

@@ -1,5 +1,4 @@
 import { createWebHistory, createRouter } from "vue-router";
-import axios from 'axios';
 import routes from './routes';
 import appConfig from "../../app.config";
 import store from '@/state/store';
@@ -23,65 +22,33 @@ const router = createRouter({
   },
 });
 
-// API based Authentication
-// Before each route evaluates...
-router.beforeEach(async (routeTo, routeFrom, next) => {
-
+router.beforeEach((routeTo, routeFrom, next) => {
+  // Check if auth is required on this route
+  // (including nested routes).
   const authRequired = routeTo.matched.some((route) => route.meta.authRequired);
 
+  // If auth isn't required for the route, just continue.
   if (!authRequired) return next();
 
-  axios.defaults.headers.common['authorization'] = 'Bearer ' + localStorage.getItem('jwt'); // for all requests
-  await axios.get('https://api-node.themesbrand.website/profile').then((data) => {
-    localStorage.setItem('userdata', JSON.stringify(data.data.user));
-    localStorage.setItem('userid', data.data.user._id);
-    localStorage.setItem('user', JSON.stringify(data.data.user));
-    next();
-  }).catch(() => {
-    next({ name: 'login', query: { redirectFrom: routeTo.fullPath } });
-  });
-});
+  // If auth is required and the user is logged in...
+  if (store.getters['auth/loggedIn']) {
+    // Validate the local user token...
+    return store.dispatch('auth/validate').then((validUser) => {
+      // Then continue if the token still represents a valid user,
+      // otherwise redirect to login.
+      validUser ? next() : redirectToLogin();
+    });
+  }
 
-router.beforeEach((routeTo, routeFrom, next) => {
-  if (process.env.VUE_APP_DEFAULT_AUTH === "firebase") {
+  // If auth is required and the user is NOT currently logged in,
+  // redirect to login.
+  redirectToLogin();
 
-    // Check if auth is required on this route
-    // (including nested routes).
-    const authRequired = routeTo.matched.some((route) => route.meta.authRequired);
-
-    // If auth isn't required for the route, just continue.
-    if (!authRequired) return next();
-
-    // If auth is required and the user is logged in...
-    if (store.getters['auth/loggedIn']) {
-      // Validate the local user token...
-      return store.dispatch('auth/validate').then((validUser) => {
-        // Then continue if the token still represents a valid user,
-        // otherwise redirect to login.
-        validUser ? next() : redirectToLogin();
-      });
-    }
-
-    // If auth is required and the user is NOT currently logged in,
-    // redirect to login.
-    redirectToLogin();
-
-    // eslint-disable-next-line no-unused-vars
-    // eslint-disable-next-line no-inner-declarations
-    function redirectToLogin() {
-      // Pass the original route to the login component
-      next({ name: 'login', query: { redirectFrom: routeTo.fullPath } });
-    }
-  } else {
-    const publicPages = ['/login', '/register', '/forgot-password'];
-    const authpage = !publicPages.includes(routeTo.path);
-    const loggeduser = localStorage.getItem('user');
-
-    if (authpage && !loggeduser) {
-      return next('/login');
-    }
-
-    next();
+  // eslint-disable-next-line no-unused-vars
+  // eslint-disable-next-line no-inner-declarations
+  function redirectToLogin() {
+    // Pass the original route to the login component
+    next({ name: 'entrar', query: { redirectFrom: routeTo.fullPath } });
   }
 });
 

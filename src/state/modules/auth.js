@@ -1,4 +1,4 @@
-import { getFirebaseBackend } from '../../authUtils.js'
+import { getFirebaseBackend } from '@/authUtils'
 
 export const state = {
     currentUser: sessionStorage.getItem('authUser'),
@@ -68,8 +68,7 @@ export const actions = {
         if (getters.loggedIn) return dispatch('validate')
 
         return getFirebaseBackend().forgetPassword(email).then((response) => {
-            const message = response.data
-            return message
+            return response.data
         });
     },
 
